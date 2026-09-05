@@ -36,6 +36,26 @@ local CONSTANTS = {
   transactionLimit = 100,
 }
 
+-- Connect-/Token-Antworten (OIDC + UI-HTML); analog givve Card.
+local CREDENTIAL_REJECTION_MARKERS = {
+  "invalid_grant",
+  "invalid_client",
+  "access_denied",
+  "invalid credentials",
+  "invalid email",
+  "invalid password",
+  "unauthorized",
+  "login failed",
+  "falsche",
+  "ungültig",
+  "ungueltig",
+  "incorrect",
+  "wrong password",
+  "wrong code",
+  "otp invalid",
+  "code invalid",
+}
+
 local connection
 local session = {}
 
@@ -316,6 +336,26 @@ end
 function captchaBlockedMessage()
   return "Pluxee: Login blockiert durch hCaptcha auf connect.pluxee.app — "
     .. "automatischer E-Mail/OTP-Login aus dem Plugin ist derzeit nicht möglich."
+end
+
+function isCredentialRejection(text)
+  if type(text) ~= "string" or text == "" then
+    return false
+  end
+  local lower = text:lower()
+  for _, marker in ipairs(CREDENTIAL_REJECTION_MARKERS) do
+    if lower:find(marker, 1, true) then
+      return true
+    end
+  end
+  return false
+end
+
+function credentialRejectionOr(message)
+  if isCredentialRejection(message) then
+    return LoginFailed
+  end
+  return message
 end
 
 function emailOtpChallenge(message)
@@ -818,6 +858,9 @@ function exchangeAuthorizationCode(code)
   local raw = apiRequest("POST", CONSTANTS.tokenUrl, body, nil, "application/x-www-form-urlencoded")
   local payload = parseJson(raw)
   if not payload or type(payload.access_token) ~= "string" or payload.access_token == "" then
+    if isCredentialRejection(raw) then
+      return nil, LoginFailed
+    end
     return nil, "Pluxee: Token-Tausch fehlgeschlagen."
   end
   return payload, nil
@@ -849,7 +892,7 @@ function continueLoginAfterResponse(response, currentUrl)
   end
   if kind == "password" then
     if session.passwordSubmitted then
-      return "Pluxee: Passwort-Schritt fehlgeschlagen (Seite blieb Passwort)."
+      return LoginFailed
     end
     local pw = session.pendingPassword or ""
     local nextHtml, err = submitLoginPassword(haystack, currentUrl, pw)
@@ -862,10 +905,18 @@ function continueLoginAfterResponse(response, currentUrl)
     return continueLoginAfterResponse(nextHtml, currentUrl)
   end
   if kind == "otp" then
+    if session.otpSubmitted and isCredentialRejection(haystack) then
+      session.awaitingMfa = false
+      return LoginFailed
+    end
     session.awaitingMfa = true
     session.pendingLoginHtml = haystack
     session.pendingLoginUrl = currentUrl
     return emailOtpChallenge(nil)
+  end
+  if isCredentialRejection(haystack) then
+    session.awaitingMfa = false
+    return LoginFailed
   end
   if kind == "email" then
     return captchaBlockedMessage() .. " (E-Mail-Schritt erneut — Captcha erwartet.)"
@@ -962,6 +1013,7 @@ function InitializeSession2(protocol, bankCode, step, credentials, interactive)
     if err then
       return err
     end
+    session.otpSubmitted = true
     session.pendingLoginHtml = response
     return continueLoginAfterResponse(response, currentUrl)
   end
@@ -1082,5 +1134,9 @@ function EndSession()
   session.pendingPassword = nil
   session.awaitingMfa = false
   session.codeVerifier = nil
+  session.passwordSubmitted = nil
+  session.otpSubmitted = nil
+  session.pendingLoginHtml = nil
+  session.pendingLoginUrl = nil
   connection = nil
 end

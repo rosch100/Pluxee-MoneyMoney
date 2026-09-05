@@ -3,8 +3,9 @@
 Datum: 2026-09-05
 
 Status: **Teil-Implementiert** — Parser/Hooks/Konto-pro-Benefit/Captcha-Gate;
-Erstlogin durch hCaptcha blockiert (Live 2026-09-05); OIDC-Form-POSTs laut Plan
-noch offen
+OIDC-Form-POSTs (E-Mail/Passwort/OTP/Token) verdrahtet; Erstlogin durch
+invisible hCaptcha auf Connect weiterhin blockiert (Live 2026-09-05; spezifiziert,
+kein Cookie-Fallback). Offline-Tests grün; Live-Smoke in MoneyMoney empfohlen.
 
 ## Ziel
 
@@ -172,8 +173,9 @@ Feldnamen/CSRF beim ersten Live-Login festnageln — nicht raten):
    expliziter Fehlermeldung an MoneyMoney (z. B. dass Login im Plugin blockiert
    ist). Kein Cookie-Import als stiller Ersatz in v1; kein leerer Erfolg.
 
-Credential rejection: falsche E-Mail / OTP / Passwort über Marker/Statuscodes;
-kein stilles Weitermachen.
+Credential rejection: falsche E-Mail / OTP / Passwort über Marker in
+Antworttext/`error` → `LoginFailed` (analog givve Card); Netzwerk/Parse:
+explizite Fehlermeldung; kein stiller Fallback, keine Dummy-Salden.
 
 ### API (Live 2026-09-05)
 
