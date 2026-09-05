@@ -542,7 +542,7 @@ EOF
 **Interfaces:**
 - Produces: `https://github.com/rosch100/Pluxee-MoneyMoney` mit Branch `main`
 
-- [ ] **Step 1: Initial commit falls noch keiner**
+- [x] **Step 1: Initial commit falls noch keiner**
 
 ```sh
 cd Pluxee-MoneyMoney
@@ -558,7 +558,7 @@ EOF
 
 Kein Cursor-Co-Author-Trailer. Vor Commit: `/codereview` auf dem zu commitenden Diff (`codereview-before-commit`).
 
-- [ ] **Step 2: Repo anlegen und pushen**
+- [x] **Step 2: Repo anlegen und pushen**
 
 Wenn Remote noch fehlt:
 
@@ -574,7 +574,7 @@ git push -u origin HEAD
 
 Expected: `origin` zeigt auf `rosch100/Pluxee-MoneyMoney`, `main` aktuell.
 
-- [ ] **Step 3: README-Raw-URL prüfen**
+- [x] **Step 3: README-Raw-URL prüfen**
 
 ```sh
 curl -sI "https://raw.githubusercontent.com/rosch100/Pluxee-MoneyMoney/main/Pluxee.lua" | head -n 5
