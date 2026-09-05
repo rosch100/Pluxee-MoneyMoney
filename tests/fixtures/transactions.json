@@ -52,6 +52,22 @@
           "splitAmount": { "value": -100, "exponent": 2, "currency": "EUR" }
         }
       ]
+    },
+    {
+      "id": "DEUfixture-tx-declined",
+      "description": "Purchase",
+      "merchantName": "EDEKA 5474",
+      "date": "2025-07-19T07:09:08.000",
+      "status": "DECLINED",
+      "type": "DEBIT",
+      "amount": { "value": -896, "exponent": 2, "currency": "EUR" },
+      "splitData": [
+        {
+          "uniqueWalletId": "DEUFIXTUREBENEFIT001",
+          "walletType": "GF",
+          "splitAmount": { "value": -896, "exponent": 2, "currency": "EUR" }
+        }
+      ]
     }
   ]
 }

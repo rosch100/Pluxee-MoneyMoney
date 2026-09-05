@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="de">
-<head><title>Code</title></head>
+<head><title>Überprüfe dein Postfach | PluxeeConnect</title></head>
 <body>
+  <script id="__NEXT_DATA__" type="application/json">{"page":"/oidc-provider/email-address-verification","props":{"interactionId":"fixture-interaction-otp","opUrl":"https://connect.pluxee.app/op","hcaptcha":{"hcaptchaEnabled":true,"siteKey":"b0fdbea0-b123-42f6-b521-d532697a5512"},"page":{"data":{"email":"user@example.com","nbCodesSent":0,"remainingTime":0,"hcaptchaCredits":3,"emailAndPhoneVerification":{"codeLifetime":300,"minSendingInterval":20,"maxSendingAttempts":3,"maxInputAttempts":5}}},"pageContent":{"otp_label":"Bestätigungscode"}}}</script>
   <form method="post">
-    <label>Einmalcode aus der E-Mail</label>
-    <input name="otp" type="text" />
+    <input type="hidden" name="action" value="address-validation" />
+    <input type="hidden" name="isWebAuthnAvailable" value="false" />
+    <input type="hidden" name="code" value="" />
     <button type="submit">Bestätigen</button>
   </form>
 </body>
