@@ -223,6 +223,10 @@ assertEq(classifyLoginHtml(readFixture("login_password.html")), "password", "cla
 assertEq(classifyLoginHtml(readFixture("login_otp.html")), "otp", "classify.otp")
 assertEq(type(captchaBlockedMessage()) == "string", true, "captcha.msg")
 assertEq(captchaBlockedMessage():find("hCaptcha", 1, true) ~= nil, true, "captcha.msg.hcaptcha")
+assertEq(isCredentialRejection("invalid_grant"), true, "cred.reject.invalid_grant")
+assertEq(isCredentialRejection("otp invalid"), true, "cred.reject.otp")
+assertEq(isCredentialRejection("welcome to pluxee"), false, "cred.reject.clean")
+assertEq(credentialRejectionOr("invalid credentials"), LoginFailed, "cred.reject.LoginFailed")
 
 local loginBody = buildLoginSubmissionBody("User@Example.com")
 assertEq(loginBody:find("action=login%-submission", 1) ~= nil, true, "login.body.action")

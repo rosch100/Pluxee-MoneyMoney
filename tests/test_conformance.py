@@ -56,6 +56,10 @@ def main() -> None:
             f"{lua_path}: service name",
         )
         assert_true(
+            file_contains(lua_path, r"version\s*=\s*0\.91"),
+            f"{lua_path}: version 0.91",
+        )
+        assert_true(
             file_contains(lua_path, r"allowedHosts"),
             f"{lua_path}: host allowlist",
         )
@@ -66,6 +70,10 @@ def main() -> None:
         assert_true(
             file_contains(lua_path, r"captchaBlockedMessage|hcaptcha|hCaptcha"),
             f"{lua_path}: captcha gate",
+        )
+        assert_true(
+            file_contains(lua_path, r"CREDENTIAL_REJECTION_MARKERS|LoginFailed"),
+            f"{lua_path}: credential rejection",
         )
     print("CONFORMANCE OK")
 

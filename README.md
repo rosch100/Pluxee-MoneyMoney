@@ -7,8 +7,14 @@ Hub (gemeinsame Tools/Doku): https://github.com/rosch100/moneymoney-extensions
 
 ## Installation
 Unsignierte Datei: [Pluxee.lua](https://raw.githubusercontent.com/rosch100/Pluxee-MoneyMoney/main/Pluxee.lua)
-Datei nach `~/Library/Containers/com.moneymoney-app.retail/Data/Library/Application Support/MoneyMoney/Extensions` kopieren, oder im Klon `./link_ext.sh` ausführen.
-Unsignierte Plugins: MoneyMoney-**Beta**, Signaturprüfung in den Erweiterungseinstellungen aus.
+
+Datei nach
+`~/Library/Containers/com.moneymoney-app.retail/Data/Library/Application Support/MoneyMoney/Extensions`
+**kopieren** (keine Hardlinks — die Sandbox lädt sie oft nicht), oder im Klon
+`./link_ext.sh` ausführen (legt eine echte Kopie an). Danach MoneyMoney neu starten.
+
+Unsignierte Plugins: MoneyMoney-**Beta**, Signaturprüfung unter
+*MoneyMoney → Einstellungen → Erweiterungen* **ausschalten**.
 
 In MoneyMoney Bankzugang anlegen: Bank **Pluxee**, Benutzername = E-Mail.
 Passwort nur setzen, wenn das Portal ein Passwortfeld zeigt; sonst kann das Feld leer bleiben.

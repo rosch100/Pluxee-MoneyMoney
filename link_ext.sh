@@ -1,9 +1,11 @@
 #!/bin/sh
 set -e
+# MoneyMoney läuft sandboxed: Hardlinks auf Dateien außerhalb des Containers
+# werden oft nicht geladen. Deshalb echte Kopie (wie Givve / übrige Extensions).
 EXT_DIR="$HOME/Library/Containers/com.moneymoney-app.retail/Data/Library/Application Support/MoneyMoney/Extensions"
 SRC="$(cd "$(dirname "$0")" && pwd)/Pluxee.lua"
 DST="$EXT_DIR/Pluxee.lua"
 ls -li "$DST" "$SRC" 2>/dev/null || true
 rm -f "$DST"
-ln "$SRC" "$DST"
+cp "$SRC" "$DST"
 ls -li "$DST" "$SRC"
