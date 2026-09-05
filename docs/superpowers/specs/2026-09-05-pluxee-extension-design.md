@@ -1,11 +1,11 @@
 # Pluxee — MoneyMoney Extension Design
 
 Datum: 2026-09-05
+Version: **1.00**
 
-Status: **Teil-Implementiert** — Parser/Hooks/Konto-pro-Benefit/Captcha-Gate;
-OIDC-Form-POSTs (E-Mail/Passwort/OTP/Token) verdrahtet; Erstlogin durch
-invisible hCaptcha auf Connect weiterhin blockiert (Live 2026-09-05; spezifiziert,
-kein Cookie-Fallback). Offline-Tests grün; Live-Smoke in MoneyMoney empfohlen.
+Status: **Release 1.00 (DE Live)** — OIDC E-Mail/hCaptcha/OTP inkl. OAuth-`state`,
+Konto pro Benefit (`maskedPan`), BFF Saldo + Umsätze (Pagination `toDate`, ohne
+`fromDate`=since, nur `APPROVED`). Offline-Tests grün.
 
 ## Ziel
 
@@ -34,7 +34,7 @@ zeigt), Saldo und Umsätze der Benefits Card in MoneyMoney.
 | Auth | A: E-Mail + E-Mail-OTP via MoneyMoney-Interactive; **wenn** das Portal ein Passwortfeld zeigt, mit `credentials[2]` befüllen |
 | Cookie-Import | Nicht Hauptweg in v1 (kein Fallback als stiller Ersatz für OTP) |
 | Scope | DE Consumer: Saldo + Umsätze, **Konto pro Benefit** |
-| Lieferumfang Session | Scaffold + Spec/Plan + Implementierung in derselben Lieferkette |
+| Lieferumfang | Spec + Implementierung + Tests; Release **1.00** |
 
 ## Nicht-Ziele (v1)
 
@@ -52,33 +52,34 @@ zeigt), Saldo und Umsätze der Benefits Card in MoneyMoney.
 | Lokaler Pfad | `MoneyMoney/Pluxee-MoneyMoney/` |
 | GitHub | `https://github.com/rosch100/Pluxee-MoneyMoney` |
 | Lizenz | MIT |
-| Startversion | `0.91` (Beta), später `1.0x` wenn Login+Sync stabil |
+| Version | `1.00` |
 
 ### Dateien
 
 ```text
 Pluxee-MoneyMoney/
-  Pluxee.lua
+  Pluxee Benefits.lua
   README.md
   LICENSE
   link_ext.sh
   tests/
     test_conformance.py
     test_pluxee.lua
-    fixtures/          # JSON-Snippets, keine Credentials/Tokens
+    fixtures/          # JSON/HTML-Snippets, keine Credentials/Tokens
   docs/superpowers/
     specs/2026-09-05-pluxee-extension-design.md
-    plans/             # nach writing-plans
 ```
 
-Hub-Updates nach Repo-Create: Zeile in Hub-`README.md`-Tabelle und Kurzabschnitt
-in `docs/LUA-EXTENSIONS.md`.
+Hub-Updates: Zeile in Hub-`README.md`-Tabelle und Kurzabschnitt in
+`docs/LUA-EXTENSIONS.md`.
 
 ## MoneyMoney-Vertragsfläche
 
-- `WebBanking`: `services = {"Pluxee"}`, `url = "https://consumers.pluxee.de"`,
-  `version = 0.91`, Beschreibung kurz (E-Mail/OTP, optional Passwort wenn Formular)
-- `SupportsBank`: `ProtocolWebBanking` und BankCode/Service `Pluxee`
+- `WebBanking`: `services = {"Pluxee Benefits"}`, `url = "https://consumers.pluxee.de"`,
+  `version = 1.00`, Dateiname `Pluxee Benefits.lua` (Title Case, identisch mit
+  Service-Name; Marke + Produkttyp wie *Givve Prepaid* / *Amazon Bestellungen*)
+  Beschreibung kurz (E-Mail/OTP, optional Passwort wenn Formular)
+- `SupportsBank`: `ProtocolWebBanking` und BankCode/Service `Pluxee Benefits`
 - Hooks: `InitializeSession2`, `ListAccounts`, `RefreshAccount`, `EndSession`
 - Credentials:
   - `[1]` = E-Mail (Pflicht)
@@ -91,6 +92,8 @@ in `docs/LUA-EXTENSIONS.md`.
   - `connect.pluxee.app`
   - `api.pluxee.app`
   Weitere Hosts nur nach neuem Live-Befund + Tests.
+  `connection:getBaseURL()` wird nur übernommen, wenn der Host auf der Allowlist
+  liegt.
 
 ### Kontomodell
 
@@ -102,17 +105,20 @@ in `docs/LUA-EXTENSIONS.md`.
 - Typ: Prepaid-/Benefit-Karte — `AccountTypeCreditCard` (MoneyMoney hat keinen
   eigenen Prepaid-Typ; analog givve Card)
 - Währung: EUR (aus Benefit-`amount.currency`, erwartet `EUR`)
-- Kontonummer: `pluxee.<benefitId-lower>` (stabil, eindeutig, ohne PAN-Secret).
-  Beispiel: `benefitId` `DEUGF2UW0P9TQ7UCYTEURH0` →
-  `pluxee.deugf2uw0p9tq7ucyteurh0`.
-- Anzeigename: `{benefit.name} (····{card.panLastFour})` — Fallback
-  `benefit.name` bzw. `card.name`, wenn Last4 fehlt.
+- Kontonummer: API-`card.maskedPan` unverändert (Live z. B. `XXXX 6138`).
+  Mehrere Benefits mit gleicher `maskedPan` → Suffix ` ` + `benefitId-lower`
+  zur Eindeutigkeit. Legacy-Nummern (`pluxee.<benefitId-lower>`, `····last4`)
+  werden beim Lookup weiter erkannt.
+- Anzeigename: ein Konto → `{benefit.name}` (Fallback `card.name`);
+  mehrere Konten → `{benefit.name} {panLastFour}` (ohne Klammern/Punkte).
 - Saldo: genau dieses Benefit-`amount` (nicht Summe aller Benefits der Karte;
   Portal-Zeile zeigt ebenfalls `benefits[0]`, Detailzeilen je Benefit).
-- Umsätze: `GET …/cards/{cardId}/transactions`, dann nur Buchungen mit
-  `splitData[].uniqueWalletId == benefitId`; Betrag ausschließlich aus dem
-  passenden `splitAmount` (kein stiller Fallback auf Tx-Gesamtbetrag).
-  Fehlt `splitAmount` trotz Match → Buchung verwerfen (explizit, kein Fake).
+- Umsätze: `GET …/cards/{cardId}/transactions?limit=99` (+ optional `benefitId`,
+  Folgeseiten per `toDate=YYYY-MM-DD`); **kein** `fromDate` aus MoneyMoney-`since`
+  (schneidet Historie ab und löst MM-Warnung „ältere Umsätze…“ aus).
+  Nur Buchungen mit `splitData[].uniqueWalletId == benefitId`; Betrag nur aus
+  `splitAmount`. Nur Status `APPROVED` importieren (`DECLINED`/`OTHER`/ohne Status
+  verwerfen). Fehlt `splitAmount` trotz Match → Buchung verwerfen (explizit, kein Fake).
 - Keine Dummy-Umsätze; leere Transaktionsliste ist gültig
 
 Verworfen: ein Konto pro Karte (vermischt Benefits); ein Konto nur nach E-Mail.
@@ -126,10 +132,10 @@ InitializeSession2
   → gültigen Refresh-/Access-Token aus Map wiederverwenden (ohne Re-Login)
   → sonst OIDC Authorization Code + PKCE:
        authorize → Login-UI Connect
-       E-Mail setzen → weiter
+       hCaptcha (Interactive) → E-Mail-POST mit h-captcha-response
        Passwortfeld vorhanden? → credentials[2] setzen
-       OTP-Schritt → Interactive(E-Mail-Code) → absenden
-       Captcha/Blocker → klarer Fehler (kein stiller Fallback, kein Fake-Login)
+       OTP-Schritt → ggf. Resend (+ Captcha) → Interactive(E-Mail-Code)
+       Callback: code + state (state muss session.oauthState matchen)
        code → token (access + refresh) speichern
   → Session-State serialisierbar (Tokens/Strings), keine Connection-Userdata
 
@@ -139,17 +145,17 @@ ListAccounts
   → Session-Map accountNumber → { cardId, benefitId }
 
 RefreshAccount
-  → Lookup cardId/benefitId aus Session-Map
-  → GET /v2/de/cards/{cardId}/transactions?limit=…
-  → Filter auf benefitId via splitData.uniqueWalletId
-  → Mapping: date, splitAmount/amount, merchantName/description, bookingKey
-  → since-Filter clientseitig bzw. Limit; Pagination nur nach Live-Befund
+  → Lookup cardId/benefitId aus Session-Map (inkl. Legacy-Nummern)
+  → GET /v2/de/cards/{cardId}/transactions?limit=99&benefitId=…
+  → bei voller Seite weitere Requests mit toDate (ältestes Datum), ohne fromDate
+  → Filter: benefitId via splitData; nur APPROVED; Mapping bookingKey/date/amount
+  → MoneyMoney-since nicht als API-fromDate (volle Portal-Historie, MM dedupliziert)
 
 EndSession
   → bei persistierter Map keinen Remote-Logout; Bucket behalten
 ```
 
-### Auth-Details (Live nachziehen, Spec-Rahmen)
+### Auth-Details
 
 OIDC (Discovery `https://connect.pluxee.app/op/.well-known/openid-configuration`):
 
@@ -160,22 +166,28 @@ OIDC (Discovery `https://connect.pluxee.app/op/.well-known/openid-configuration`
 | `response_type` | `code` |
 | `scope` | `openid profile email` (+ `offline_access` wenn Token-Endpoint liefert) |
 | PKCE | `S256` |
+| `state` | Session-Wert; Pflicht-Match vor Token-Tausch |
 | authorize | `https://connect.pluxee.app/op/oidc/auth` |
 | token | `https://connect.pluxee.app/op/oidc/token` |
 
-Login-UI-Schritte (Reihenfolge verbindlich für Implementierung; exakte
-Feldnamen/CSRF beim ersten Live-Login festnageln — nicht raten):
+Login-UI-Schritte:
 
 1. E-Mail eingeben und absenden (passwordless-Pfad bevorzugen).
-2. Erscheint ein **Passwortfeld** → mit `credentials[2]` befüllen und absenden.
-3. Erscheint **OTP/E-Mail-Code** → `MM.interactive` / Challenge; Code absenden.
-4. **Captcha** oder nicht automatisierbarer Schritt → Session abbrechen mit
-   expliziter Fehlermeldung an MoneyMoney (z. B. dass Login im Plugin blockiert
-   ist). Kein Cookie-Import als stiller Ersatz in v1; kein leerer Erfolg.
+2. **Captcha** → MoneyMoney-Interactive mit offizieller hCaptcha-Script-URL
+   (`sitekey` + `referer` aus der Login-Seite); Token in `credentials[1]`, dann
+   Form-POST mit `h-captcha-response`. Fehlt der Site-Key → expliziter Fehler.
+3. Erscheint ein **Passwortfeld** → mit `credentials[2]` befüllen und absenden.
+4. Erscheint **OTP/E-Mail-Code** → ggf. Resend (JSON, ggf. Captcha);
+   `MM.interactive` / Challenge; Code absenden.
+5. Callback-URL: Authorization-`code` aus `connection:getBaseURL()` (nicht SPA-HTML);
+   `state` gegen `session.oauthState` prüfen.
 
 Credential rejection: falsche E-Mail / OTP / Passwort über Marker in
 Antworttext/`error` → `LoginFailed` (analog givve Card); Netzwerk/Parse:
 explizite Fehlermeldung; kein stiller Fallback, keine Dummy-Salden.
+
+OTP-`interactionId` nur `[%w%-]+` (≤128); `opUrl` nur Allowlist-Hosts,
+sonst Default `CONSTANTS.oidcAuthority`.
 
 ### API (Live 2026-09-05)
 
@@ -192,7 +204,7 @@ Header:
 | Zweck | Request |
 | --- | --- |
 | Wallet / Karten + Saldo | `GET /v2/de/cards` → `getWallet1` |
-| Umsätze | `GET /v2/de/cards/{cardId}/transactions?limit=N` |
+| Umsätze | `GET /v2/de/cards/{cardId}/transactions?limit=1..99` (+ `benefitId`, Folgeseiten `toDate`; **kein** `fromDate`=since) |
 | optional Meta | `GET /v2/de/consumer/cards/{cardId}/consumerInfo` |
 
 Betragsmodell: `{ "value": <int>, "exponent": 2, "currency": "EUR" }` —
@@ -202,9 +214,7 @@ vorzeichenbehaftet (DEBIT negativ).
 ### Session / Multi-Login
 
 Folgt der Hub-/Sibling-Konvention **Multi-Login LocalStorage** wie givve Card
-(`connectionsByAccount[accountKey]`). Die ausführliche Hub-Spec lag zum
-Zeitpunkt dieser Spec nicht im lokalen Hub-Checkout; verbindlich ist das
-givve-/Sibling-Muster im Code, nicht eine zweite parallele Spec hier.
+(`connectionsByAccount[accountKey]`).
 
 - `accountKey` = volle E-Mail aus `credentials[1]`, lowercased und getrimmt
 - Map-Eintrag: `accessToken`, `refreshToken`, `expiresAt` — nur serialisierbare
@@ -220,53 +230,33 @@ givve-/Sibling-Muster im Code, nicht eine zweite parallele Spec hier.
 | --- | --- |
 | Unbekannte E-Mail / falsches Passwort | Credential rejection |
 | Falscher OTP | Challenge erneut oder klarer Fehler |
-| Captcha / nicht automatisierbar | Expliziter Fehler; kein stiller Fallback |
+| Captcha / nicht automatisierbar | MM-hCaptcha-Challenge; bei Fehlschlag expliziter Fehler |
+| OAuth state mismatch / fehlt | Expliziter Fehler; kein Token-Tausch |
 | Session / Token abgelaufen mid-sync | Refresh oder Re-Login; kein Fake-Erfolg |
 | Parse / Netzwerk / unerwartetes JSON | Fehlerstring an MoneyMoney; kein 0-Saldo als Erfolg |
 | Leere Kartenliste | Klarer Fehler oder leere Account-Liste laut Engine-Konvention — kein Dummy-Konto |
 
 ## Tests
 
-- `test_conformance.py`: Pflicht-Hooks / WebBanking-Metadaten (`Pluxee`, version, url)
-- `test_pluxee.lua`: OTP-Pfad-Erkennung, Passwortfeld-Zweig, Captcha-Fail,
-  Wallet-/Transaktions-Parser gegen Fixtures (anonymisierte JSON-Ausschnitte)
+- `test_conformance.py`: Pflicht-Hooks / WebBanking-Metadaten (`Pluxee Benefits`, version `1.00`, url)
+- `test_pluxee.lua`: OTP-Pfad-Erkennung, Passwortfeld-Zweig, Captcha, OAuth-state,
+  `interactionId`/`opUrl`-Validierung, Wallet-/Transaktions-Parser gegen Fixtures
 - Keine echten Secrets, Tokens, vollständigen PANs oder Personen-PII in Fixtures
-
-## Lieferreihenfolge
-
-1. Spec (dieses Dokument) + Implementation Plan (`writing-plans`)
-2. Scaffold GitHub-Repo + Stub-`Pluxee.lua` + Tests grün
-3. OIDC-Login: E-Mail → optional Passwort → OTP verdrahten (Live-Festnagelung)
-4. Saldo + Umsätze über BFF + Hub-Doku
 
 ## Live-Befund Login (2026-09-05)
 
 - Login-UI: `…/op/interaction/{id}/login` → Form `action=login-submission`,
   Feld `name="login"` (E-Mail), Button Weiter
 - **Invisible hCaptcha** ist aktiv (`hcaptchaEnabled`, Site-Hinweis auf der Seite).
-  Der SPA-Submit führt vor dem POST `hcaptcha.execute` aus. Ohne gelöstes
-  Captcha ist der E-Mail-Schritt aus MoneyMoney-Lua **nicht** automatisierbar.
-- Plugin-Verhalten: Captcha erkennen → **expliziter Fehler** (kein Cookie-
-  Fallback, kein Fake-Login). Token-Reuse bleibt für bereits gespeicherte
-  Sessions.
+  Der SPA-Submit führt vor dem POST `hcaptcha.execute` aus und hängt
+  `h-captcha-response` an das Formular.
+- Plugin-Verhalten: Site-Key aus der Seite lesen → MoneyMoney-Captcha-Challenge
+  (`https://js.hcaptcha.com/1/api.js?sitekey=…&referer=…`) → Token → E-Mail-POST.
+- Nach OTP/Consent: Authorization-`code` in der finalen Callback-URL
+  (`getBaseURL`), nicht im SPA-HTML-Body.
+- Token-Reuse bleibt für bereits gespeicherte Sessions.
 
-## Offene Punkte (nur Live, kein Spec-Blocker)
+## Offene Punkte (kein Release-Blocker)
 
-- Exakte CSRF-/Hidden-Felder und OTP-/Passwort-Seiten-HTML nach Captcha
-- Pagination / `since`-Semantik der Transactions-API
 - Ob `offline_access` / Refresh für den DE-Client zuverlässig geliefert wird
 - Ob eine künftige Engine-API Captcha/JS-Login erlaubt (dann Auth-Pfad nachziehen)
-
-## Conformity-Abgleich (Remediation 2026-09-05)
-
-| Früheres Finding | Adressiert in |
-| --- | --- |
-| Keine Spec-Datei | dieses Dokument |
-| Captcha/OIDC-Risiko unklar | Auth-Details + Fehlerbehandlung |
-| Passwort-Semantik unklar | Credentials + Login-Schritte 1–3 |
-| Hosts/API nicht fix | Host-Allowlist + API-Tabelle |
-| Kontomodell offen | Kontomodell (pro Benefit, Live 2026-09-05) |
-| Multi-Benefit-UI/API | Kontomodell + Architektur RefreshAccount |
-| Session/Multi-Login offen | Session / Multi-Login |
-| Hub-Registry | Lieferreihenfolge Schritt 4 |
-| Secrets | Tests + Session (Verbot) |

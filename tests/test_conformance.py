@@ -52,12 +52,16 @@ def main() -> None:
             f"{lua_path}: missing EndSession",
         )
         assert_true(
-            file_contains(lua_path, r'services\s*=\s*\{\s*"Pluxee"\s*\}'),
-            f"{lua_path}: service name",
+            file_contains(lua_path, r'services\s*=\s*\{\s*"Pluxee Benefits"\s*\}'),
+            f"{lua_path}: service name Pluxee Benefits",
         )
         assert_true(
-            file_contains(lua_path, r"version\s*=\s*0\.91"),
-            f"{lua_path}: version 0.91",
+            file_contains(lua_path, r"version\s*=\s*1\.00"),
+            f"{lua_path}: version 1.00",
+        )
+        assert_true(
+            lua_path.name == "Pluxee Benefits.lua",
+            f"{lua_path.name}: Dateiname muss 'Pluxee Benefits.lua' sein (Service-Konvention)",
         )
         assert_true(
             file_contains(lua_path, r"allowedHosts"),
