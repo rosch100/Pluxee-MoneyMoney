@@ -1,0 +1,22 @@
+{
+  "walletId": "fixture-wallet-1",
+  "cards": [
+    {
+      "cardId": "DEU00000000000009999999",
+      "maskedPan": "XXXX 6138",
+      "isPhysical": true,
+      "scheme": "VISA",
+      "state": "ACTIVE",
+      "name": "Benefits Card",
+      "expiry": "2028-04-01T00:00:00.000Z",
+      "benefits": [
+        {
+          "benefitId": "DEUFIXTUREBENEFIT001",
+          "name": "Benefits Card",
+          "amount": { "value": 337, "exponent": 2, "currency": "EUR" }
+        }
+      ],
+      "panLastFourDigits": "6138"
+    }
+  ]
+}
