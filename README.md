@@ -1,66 +1,42 @@
-# Pluxee Benefits — MoneyMoney Extension
+# Pluxee Benefits — MoneyMoney-Erweiterung
 
-Plugin Homepage: https://github.com/rosch100/Pluxee-MoneyMoney
-
-Portal: https://consumers.pluxee.de (OIDC: connect.pluxee.app, API: api.pluxee.app)
+Pluxee-Benefits (Saldo und Umsätze) in MoneyMoney.
 
 Version: **1.00**
-
-Status: E-Mail / hCaptcha / OTP (Passwort nur wenn Formular); Konto pro Benefit; BFF Saldo + Umsätze
-
-Hub (gemeinsame Tools/Doku): https://github.com/rosch100/moneymoney-extensions
+Repository: https://github.com/rosch100/Pluxee-MoneyMoney
+Gemeinsame Infos: https://github.com/rosch100/moneymoney-extensions
 
 ## Installation
 
-Unsignierte Datei: [Pluxee Benefits.lua](https://raw.githubusercontent.com/rosch100/Pluxee-MoneyMoney/main/Pluxee%20Benefits.lua)
+Unsignierte Datei:
+[Pluxee Benefits.lua](https://raw.githubusercontent.com/rosch100/Pluxee-MoneyMoney/main/Pluxee%20Benefits.lua)
 
 Datei nach
 `~/Library/Containers/com.moneymoney-app.retail/Data/Library/Application Support/MoneyMoney/Extensions`
 **kopieren** (keine Hardlinks — die Sandbox lädt sie oft nicht), oder im Klon
-`./link_ext.sh` ausführen (legt eine echte Kopie an). Danach MoneyMoney neu starten.
+`./link_ext.sh` ausführen. Danach MoneyMoney neu starten.
 
 Unsignierte Plugins: MoneyMoney-**Beta**, Signaturprüfung unter
-*MoneyMoney → Einstellungen → Erweiterungen* **ausschalten**.
+*MoneyMoney → Einstellungen → Erweiterungen* ausschalten.
 
-In MoneyMoney: **Konto → Konto hinzufügen → Andere** (nicht IBAN/BLZ) →
-**Pluxee Benefits** wählen. Service-Name und Dateiname sind absichtlich
-*Pluxee Benefits* (Marke + Produkttyp), analog *Givve Prepaid* / *Amazon Bestellungen*.
-Benutzername = E-Mail.
-Passwort nur setzen, wenn das Portal ein Passwortfeld zeigt; sonst kann das Feld leer bleiben.
-Bei OTP den Code aus der E-Mail in die Challenge eingeben.
+## Einrichten
 
-## Login / hCaptcha / OTP
+*Konto hinzufügen* → *Andere* (nicht IBAN/BLZ) → **Pluxee Benefits**.
 
-Der Connect-Login nutzt **invisible hCaptcha**. Das Plugin startet die
-MoneyMoney-Captcha-Challenge (Site-Key aus der Login-Seite) und sendet das Token
-als `h-captcha-response` mit dem E-Mail-POST. Danach folgen optional Passwort und
-E-Mail-OTP. OTP-Resend kann erneut Captcha verlangen.
-Gespeicherte Tokens (LocalStorage) werden für Folgesyncs wiederverwendet
-(Refresh; sonst erneuter Login). OAuth-`state` und Host-Allowlist schützen den
-Callback- und Request-Pfad.
+Benutzername = E-Mail. Passwort nur setzen, wenn das Portal danach fragt;
+sonst kann das Feld leer bleiben. Captcha und E-Mail-Code erscheinen bei Bedarf
+in MoneyMoney — den Code aus der E-Mail eingeben.
 
-## Konten / Umsätze
+Mehrere Logins: je einen Bankzugang mit eigener E-Mail anlegen.
 
-Je Benefit ein MoneyMoney-Konto:
+## Nutzung
 
-- Kontonummer = API-`maskedPan` (z. B. `XXXX 6138`); bei gleicher PAN mehrerer
-  Benefits Suffix ` ` + `benefitId` (klein)
-- Name bei einem Konto `{Benefit-Name}`, bei mehreren `{Benefit-Name} {last4}`
-- Saldo = Benefit-Betrag; Typ Kreditkarte (MoneyMoney-Prepaid-Konvention)
-- Umsätze: nur Status `APPROVED`, gefiltert nach `benefitId`; Pagination per
-  `toDate` (kein `fromDate` aus MoneyMoney-`since`)
+Jeder Benefit erscheint als eigenes Konto. Bei mehreren Benefits mit gleicher
+Kartennummer unterscheidet MoneyMoney sie anhand des Namens bzw. der letzten
+Ziffern.
 
-Mehrere Logins: je Bankzugang mit eigener E-Mail.
-
-## Tests
-
-```sh
-test -x .venv/bin/python && .venv/bin/python tests/test_conformance.py || python3 tests/test_conformance.py
-lua tests/test_pluxee.lua
-```
-
-Aus dem Repo-Root ausführen. Design:
-[docs/superpowers/specs/2026-09-05-pluxee-extension-design.md](docs/superpowers/specs/2026-09-05-pluxee-extension-design.md).
+Nur bestätigte Umsätze werden übernommen. Spätere Abrufe nutzen die gespeicherte
+Anmeldung, bis erneut Captcha oder Code nötig sind.
 
 ## Lizenz
 
