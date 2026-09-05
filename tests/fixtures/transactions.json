@@ -1,0 +1,57 @@
+{
+  "card": {
+    "cardId": "DEU00000000000009999999",
+    "maskedPan": "XXXX 6138",
+    "name": "Benefits Card"
+  },
+  "transactions": [
+    {
+      "id": "DEUfixture-tx-1",
+      "description": "Purchase",
+      "merchantName": "REWE Filialen Voll",
+      "date": "2025-11-22T13:42:28.000",
+      "status": "APPROVED",
+      "type": "DEBIT",
+      "amount": { "value": -40, "exponent": 2, "currency": "EUR" },
+      "splitData": [
+        {
+          "uniqueWalletId": "DEUFIXTUREBENEFIT001",
+          "walletType": "GF",
+          "splitAmount": { "value": -40, "exponent": 2, "currency": "EUR" }
+        }
+      ]
+    },
+    {
+      "id": "DEUfixture-tx-2",
+      "description": "Load",
+      "merchantName": "",
+      "date": "2025-11-01T09:00:00.000",
+      "status": "APPROVED",
+      "type": "CREDIT",
+      "amount": { "value": 5000, "exponent": 2, "currency": "EUR" },
+      "splitData": [
+        {
+          "uniqueWalletId": "DEUFIXTUREBENEFIT001",
+          "walletType": "GF",
+          "splitAmount": { "value": 5000, "exponent": 2, "currency": "EUR" }
+        }
+      ]
+    },
+    {
+      "id": "DEUfixture-tx-other-benefit",
+      "description": "Purchase",
+      "merchantName": "Other Shop",
+      "date": "2025-11-10T10:00:00.000",
+      "status": "APPROVED",
+      "type": "DEBIT",
+      "amount": { "value": -100, "exponent": 2, "currency": "EUR" },
+      "splitData": [
+        {
+          "uniqueWalletId": "DEUFIXTUREBENEFIT002",
+          "walletType": "GF",
+          "splitAmount": { "value": -100, "exponent": 2, "currency": "EUR" }
+        }
+      ]
+    }
+  ]
+}

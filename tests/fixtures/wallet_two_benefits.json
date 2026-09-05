@@ -1,0 +1,23 @@
+{
+  "walletId": "fixture-wallet-2",
+  "cards": [
+    {
+      "cardId": "DEU00000000000009999999",
+      "maskedPan": "XXXX 6138",
+      "name": "Benefits Card",
+      "panLastFourDigits": "6138",
+      "benefits": [
+        {
+          "benefitId": "DEUFIXTUREBENEFIT001",
+          "name": "Benefits Card",
+          "amount": { "value": 337, "exponent": 2, "currency": "EUR" }
+        },
+        {
+          "benefitId": "DEUFIXTUREBENEFIT002",
+          "name": "Meal Pass",
+          "amount": { "value": 1200, "exponent": 2, "currency": "EUR" }
+        }
+      ]
+    }
+  ]
+}
