@@ -1809,3 +1809,5 @@ function EndSession()
   resetLoginChallengeSessionFields()
   connection = nil
 end
+
+-- SIGNATURE: MC0CFQCHwCNQHj0Ql+ZdpG1VD3RTFM2A+QIUO7uNEajRFgClCHfqiziDCyiOixs=
