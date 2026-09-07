@@ -8,7 +8,7 @@ Gemeinsame Infos: https://github.com/rosch100/moneymoney-extensions
 
 ## Installation
 
-Datei (inkl. Adams-Signatur, wie auf moneymoney-app.com):
+Datei (inkl. MoneyMoney Signatur, wie auf moneymoney-app.com):
 [Pluxee Benefits.lua](https://raw.githubusercontent.com/rosch100/Pluxee-MoneyMoney/main/Pluxee%20Benefits.lua)
 
 Datei nach
