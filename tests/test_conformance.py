@@ -56,8 +56,8 @@ def main() -> None:
             f"{lua_path}: service name Pluxee Benefits",
         )
         assert_true(
-            file_contains(lua_path, r"version\s*=\s*1\.00"),
-            f"{lua_path}: version 1.00",
+            file_contains(lua_path, r"version\s*=\s*1\.01"),
+            f"{lua_path}: version 1.01",
         )
         assert_true(
             lua_path.name == "Pluxee Benefits.lua",
