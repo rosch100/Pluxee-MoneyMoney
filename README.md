@@ -2,7 +2,8 @@
 
 Pluxee-Benefits (Saldo und Umsätze) in MoneyMoney.
 
-Version: **1.00**
+Version: **1.01**
+Voraussetzung: **MoneyMoney ≥ 2.5.2** (PKCE nutzt `MM.sha256` / `MM.hexToBin` / `MM.base64urlencode` / `MM.random`)
 Repository: https://github.com/rosch100/Pluxee-MoneyMoney
 Gemeinsame Infos: https://github.com/rosch100/moneymoney-extensions
 

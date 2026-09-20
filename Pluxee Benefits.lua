@@ -11,10 +11,10 @@
 --
 
 WebBanking{
-  version     = 1.00,
+  version     = 1.01,
   url         = "https://consumers.pluxee.de",
   services    = {"Pluxee Benefits"},
-  description = "Pluxee Benefits Card — E-Mail/OTP (Passwort nur wenn Formular)"
+  description = "Pluxee Benefits Card — E-Mail/OTP (MoneyMoney ≥ 2.5.2)"
 }
 
 local CONSTANTS = {
@@ -108,39 +108,43 @@ end
 -- PKCE (RFC 7636 S256): MoneyMoney ≥ 2.5.2 provides digest + Base64URL + CSPRNG.
 -- MM.sha256 returns uppercase hex; challenge needs BASE64URL(raw digest).
 
+local function requireMoneyMoneyCrypto(apiName)
+  error("Pluxee: MoneyMoney ≥ 2.5.2 erforderlich (" .. apiName .. " für PKCE fehlt).")
+end
+
 function sha256(msg)
   if type(MM.sha256) ~= "function" or type(MM.hexToBin) ~= "function" then
-    error("Pluxee: MM.sha256 und MM.hexToBin erforderlich für PKCE.")
+    requireMoneyMoneyCrypto("MM.sha256/MM.hexToBin")
   end
   local hex = MM.sha256(msg)
   if type(hex) ~= "string" or hex == "" then
-    error("Pluxee: MM.sha256 lieferte keinen Digest.")
+    error("Pluxee: MM.sha256 lieferte keinen Digest (MoneyMoney ≥ 2.5.2).")
   end
   local binary = MM.hexToBin(hex)
   if type(binary) ~= "string" or #binary ~= 32 then
-    error("Pluxee: MM.hexToBin lieferte keinen 32-Byte-SHA-256-Digest.")
+    error("Pluxee: MM.hexToBin lieferte keinen 32-Byte-SHA-256-Digest (MoneyMoney ≥ 2.5.2).")
   end
   return binary
 end
 
 function base64urlEncode(raw)
   if type(MM.base64urlencode) ~= "function" then
-    error("Pluxee: MM.base64urlencode erforderlich für PKCE.")
+    requireMoneyMoneyCrypto("MM.base64urlencode")
   end
   local encoded = MM.base64urlencode(raw)
   if type(encoded) ~= "string" or encoded == "" then
-    error("Pluxee: MM.base64urlencode lieferte keinen Wert.")
+    error("Pluxee: MM.base64urlencode lieferte keinen Wert (MoneyMoney ≥ 2.5.2).")
   end
   return encoded
 end
 
 function pkcePair()
   if type(MM.random) ~= "function" then
-    error("Pluxee: MM.random erforderlich für PKCE.")
+    requireMoneyMoneyCrypto("MM.random")
   end
   local raw = MM.random(32)
   if type(raw) ~= "string" or #raw ~= 32 then
-    error("Pluxee: MM.random(32) lieferte keine 32 Bytes.")
+    error("Pluxee: MM.random(32) lieferte keine 32 Bytes (MoneyMoney ≥ 2.5.2).")
   end
   local verifier = base64urlEncode(raw)
   local challenge = base64urlEncode(sha256(verifier))
