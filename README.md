@@ -39,6 +39,12 @@ Ziffern.
 Nur bestätigte Umsätze werden übernommen. Spätere Abrufe nutzen die gespeicherte
 Anmeldung, bis erneut Captcha oder Code nötig sind.
 
+## Fehler & Ideen
+
+Issues bitte über GitHub melden:
+[Neues Issue](https://github.com/rosch100/Pluxee-MoneyMoney/issues/new/choose).
+Keine MoneyMoney-Logdateien anhängen — Details stehen im Bug-Formular.
+
 ## Lizenz
 
 MIT — siehe [LICENSE](LICENSE).
