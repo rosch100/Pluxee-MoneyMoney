@@ -16,6 +16,59 @@ MM = {
       return string.format("%%%02X", string.byte(c))
     end))
   end,
+  -- Mirror MoneyMoney ≥ 2.5.2 crypto surface used by PKCE.
+  sha256 = function(data)
+    local tmp = os.tmpname()
+    local f = assert(io.open(tmp, "wb"))
+    f:write(data)
+    f:close()
+    local pipe = assert(io.popen("openssl dgst -sha256 -r " .. string.format("%q", tmp)))
+    local out = pipe:read("*a") or ""
+    pipe:close()
+    os.remove(tmp)
+    local hex = out:match("(%x+)")
+    if not hex then
+      error("openssl sha256 failed: " .. out)
+    end
+    return hex:upper()
+  end,
+  hexToBin = function(hex)
+    hex = tostring(hex):gsub("[^0-9A-Fa-f]", "")
+    if (#hex % 2) ~= 0 then
+      return nil
+    end
+    local parts = {}
+    for i = 1, #hex, 2 do
+      parts[#parts + 1] = string.char(tonumber(hex:sub(i, i + 1), 16))
+    end
+    return table.concat(parts)
+  end,
+  base64urlencode = function(raw)
+    local b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    local t = {}
+    for i = 1, #raw, 3 do
+      local a, b, c = string.byte(raw, i, i + 2)
+      b = b or 0
+      c = c or 0
+      local n = a * 65536 + b * 256 + c
+      t[#t + 1] = b64:sub(math.floor(n / 262144) % 64 + 1, math.floor(n / 262144) % 64 + 1)
+      t[#t + 1] = b64:sub(math.floor(n / 4096) % 64 + 1, math.floor(n / 4096) % 64 + 1)
+      if i + 1 <= #raw then
+        t[#t + 1] = b64:sub(math.floor(n / 64) % 64 + 1, math.floor(n / 64) % 64 + 1)
+      end
+      if i + 2 <= #raw then
+        t[#t + 1] = b64:sub(n % 64 + 1, n % 64 + 1)
+      end
+    end
+    return table.concat(t):gsub("+", "-"):gsub("/", "_")
+  end,
+  random = function(n)
+    local parts = {}
+    for i = 1, n do
+      parts[i] = string.char(math.random(0, 255))
+    end
+    return table.concat(parts)
+  end,
 }
 
 function Connection()
