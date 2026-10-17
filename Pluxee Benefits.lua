@@ -1691,4 +1691,4 @@ function EndSession()
   connection = nil
 end
 
--- SIGNATURE: MC0CFQCHwCNQHj0Ql+ZdpG1VD3RTFM2A+QIUO7uNEajRFgClCHfqiziDCyiOixs=
+-- SIGNATURE: MC0CFCAajnpoOzl2tBN/wlHnS9Z9xVSwAhUAn4WNCqeEWTZKjVv0C8Q4QgvXXo0=
